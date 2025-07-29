@@ -58,9 +58,23 @@ class AquaWizAPI:
                 if response.status == 200:
                     data = await response.json()
                     self._access_token = data["access_token"]
-                    # Token expires in seconds, convert to datetime
+                    # Handle token expiration - could be seconds or timestamp
                     expires_in = data.get("tokenExp", 3600)
-                    self._token_expires = datetime.now() + timedelta(seconds=expires_in)
+                    try:
+                        # If expires_in is a large number, it might be a timestamp
+                        if expires_in > 86400 * 365:  # More than 1 year in seconds
+                            # Could be a timestamp in seconds or milliseconds
+                            if expires_in > 1000000000000:  # Milliseconds timestamp
+                                self._token_expires = datetime.fromtimestamp(expires_in / 1000)
+                            else:  # Seconds timestamp
+                                self._token_expires = datetime.fromtimestamp(expires_in)
+                        else:
+                            # Assume it's seconds from now
+                            self._token_expires = datetime.now() + timedelta(seconds=expires_in)
+                    except (ValueError, OverflowError):
+                        # Fallback to 1 hour if there's any issue
+                        _LOGGER.warning("Invalid token expiration value: %s, using 1 hour default", expires_in)
+                        self._token_expires = datetime.now() + timedelta(hours=1)
                     return data
                 elif response.status == 401:
                     raise AquaWizAuthError("Invalid credentials")

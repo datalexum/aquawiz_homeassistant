@@ -44,6 +44,9 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     except Exception as exc:
         _LOGGER.exception("Unexpected exception")
         raise AquaWizAPIError(f"Unknown error: {exc}")
+    finally:
+        # Always close the API session after validation
+        await api.close()
 
 
 class AquaWizConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
