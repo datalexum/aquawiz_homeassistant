@@ -60,20 +60,32 @@ class AquaWizAPI:
                     self._access_token = data["access_token"]
                     # Handle token expiration - could be seconds or timestamp
                     expires_in = data.get("tokenExp", 3600)
+                    
+                    _LOGGER.debug("Token expiration raw value: %s (type: %s)", expires_in, type(expires_in))
+                    
                     try:
                         # If expires_in is a large number, it might be a timestamp
                         if expires_in > 86400 * 365:  # More than 1 year in seconds
                             # Could be a timestamp in seconds or milliseconds
                             if expires_in > 1000000000000:  # Milliseconds timestamp
-                                self._token_expires = datetime.fromtimestamp(expires_in / 1000)
+                                timestamp_seconds = expires_in / 1000
+                                _LOGGER.debug("Treating as milliseconds timestamp: %s", timestamp_seconds)
+                                self._token_expires = datetime.fromtimestamp(timestamp_seconds)
                             else:  # Seconds timestamp
+                                _LOGGER.debug("Treating as seconds timestamp: %s", expires_in)
                                 self._token_expires = datetime.fromtimestamp(expires_in)
                         else:
                             # Assume it's seconds from now
+                            _LOGGER.debug("Treating as duration in seconds: %s", expires_in)
+                            # Clamp the value to prevent overflow
+                            expires_in = min(expires_in, 86400 * 30)  # Max 30 days
                             self._token_expires = datetime.now() + timedelta(seconds=expires_in)
-                    except (ValueError, OverflowError):
+                        
+                        _LOGGER.debug("Token expires at: %s", self._token_expires)
+                        
+                    except (ValueError, OverflowError) as exc:
                         # Fallback to 1 hour if there's any issue
-                        _LOGGER.warning("Invalid token expiration value: %s, using 1 hour default", expires_in)
+                        _LOGGER.warning("Invalid token expiration value: %s, error: %s, using 1 hour default", expires_in, exc)
                         self._token_expires = datetime.now() + timedelta(hours=1)
                     return data
                 elif response.status == 401:

@@ -71,3 +71,4 @@ yarn-error.log*
 *.tmp
 *.temp
 *.log
+debug_*.py
