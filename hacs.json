@@ -1,0 +1,7 @@
+{
+  "name": "AquaWiz Alkalinity Monitor",
+  "content_in_root": false,
+  "filename": "aquawiz.zip",
+  "render_readme": true,
+  "homeassistant": "2024.1.0"
+}

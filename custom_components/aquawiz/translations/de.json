@@ -1,0 +1,41 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "AquaWiz Einrichtung",
+        "description": "Geben Sie Ihre AquaWiz Zugangsdaten ein",
+        "data": {
+          "username": "Benutzername",
+          "password": "Passwort"
+        }
+      },
+      "device": {
+        "title": "Gerät auswählen",
+        "description": "Wählen Sie Ihr AquaWiz Gerät aus",
+        "data": {
+          "device_id": "Gerät"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Ungültiger Benutzername oder Passwort",
+      "cannot_connect": "Verbindung zur AquaWiz API nicht möglich",
+      "unknown": "Unerwarteter Fehler aufgetreten"
+    },
+    "abort": {
+      "already_configured": "Gerät ist bereits konfiguriert",
+      "no_devices": "Keine Geräte für dieses Konto gefunden"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "AquaWiz Optionen",
+        "description": "Aktualisierungseinstellungen konfigurieren",
+        "data": {
+          "update_interval": "Aktualisierungsintervall (Sekunden)"
+        }
+      }
+    }
+  }
+}
