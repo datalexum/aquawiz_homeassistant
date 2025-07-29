@@ -33,17 +33,11 @@ def mock_api_auth_response():
     """Mock API authentication response."""
     return {
         "access_token": "test_token_123",
-        "tokenExp": 3600,
+        "tokenExp": 1753880500704,  # Milliseconds timestamp
         "user": {
             "email": "test@example.com",
-            "devices": [
-                {
-                    "id": "test_device_123",
-                    "name": "Test Device",
-                    "device_id": "test_device_123",
-                    "device_name": "Test Device"
-                }
-            ]
+            "devices": ["test_device_123"],  # Devices are simple strings
+            "uitimezone": 0
         }
     }
 

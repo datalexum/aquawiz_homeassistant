@@ -44,7 +44,7 @@ class TestAquaWizConfigFlow:
 
             assert result["title"] == "AquaWiz (test@example.com)"
             assert len(result["devices"]) == 1
-            assert result["devices"][0]["id"] == "test_device_123"
+            assert result["devices"][0] == "test_device_123"
 
     @pytest.mark.asyncio
     async def test_validate_input_auth_error(self, mock_hass):
@@ -146,7 +146,7 @@ class TestAquaWizConfigFlow:
             CONF_USERNAME: "test@example.com",
             CONF_PASSWORD: "testpass",
         }
-        config_flow._devices = [{"id": "test_device_123", "name": "Test Device"}]
+        config_flow._devices = ["test_device_123"]
 
         with patch.object(config_flow, 'async_set_unique_id'), \
              patch.object(config_flow, '_abort_if_unique_id_configured'), \

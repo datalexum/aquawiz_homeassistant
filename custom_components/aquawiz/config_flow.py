@@ -30,7 +30,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     
     try:
         auth_data = await api.authenticate(data[CONF_USERNAME], data[CONF_PASSWORD])
-        devices = auth_data.get("devices", [])
+        devices = auth_data.get("user", {}).get("devices", [])
         
         if not devices:
             raise AquaWizAPIError("No devices found for this account")
@@ -99,10 +99,9 @@ class AquaWizConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
 
         device_options = {}
-        for device in self._devices:
-            device_id = device.get("id", device.get("device_id", "unknown"))
-            device_name = device.get("name", device.get("device_name", f"Device {device_id}"))
-            device_options[device_id] = device_name
+        for device_id in self._devices:
+            # Devices are returned as simple strings (device IDs)
+            device_options[device_id] = f"AquaWiz {device_id}"
 
         if not device_options:
             return self.async_abort(reason="no_devices")
