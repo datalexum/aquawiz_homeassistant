@@ -204,8 +204,8 @@ class AquaWizAPI:
                 ph = data_fields.get("field27", 0) / 1000
                 ph_o = data_fields.get("field28", 0) / 1000
                 
-                # Calculate delta pH
-                delta_ph = ph - ph_o if ph > 0 and ph_o > 0 else 0
+                # Calculate delta pH and round to 3 decimal places
+                delta_ph = round(ph - ph_o, 3) if ph > 0 and ph_o > 0 else 0
                 
                 parsed_data.append({
                     "timestamp": timestamp,

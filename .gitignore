@@ -72,3 +72,7 @@ yarn-error.log*
 *.temp
 *.log
 debug_*.py
+
+# Keep integration assets
+!custom_components/*/logo.png
+!custom_components/*/icon.png
