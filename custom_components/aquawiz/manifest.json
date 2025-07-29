@@ -1,13 +1,13 @@
 {
   "domain": "aquawiz",
-  "name": "AquaWiz Alkalinity Monitor",
-  "codeowners": ["@your-username"],
+  "name": "AquaWiz Alkalinity Monitor (Unofficial)",
+  "codeowners": ["@datalexum"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/your-username/aquawiz-homeassistant",
+  "documentation": "https://github.com/datalexum/aquawiz-homeassistant",
   "integration_type": "hub",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/your-username/aquawiz-homeassistant/issues",
+  "issue_tracker": "https://github.com/datalexum/aquawiz-homeassistant/issues",
   "loggers": ["custom_components.aquawiz"],
   "requirements": ["aiohttp>=3.8.0"],
   "version": "1.0.0"

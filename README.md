@@ -4,6 +4,8 @@
 
 A Home Assistant integration for AquaWiz Alkalinity Monitoring devices. This integration allows you to monitor your reef tank's alkalinity, pH levels, and dosing data directly in Home Assistant.
 
+> **⚠️ DISCLAIMER:** This is an **unofficial integration** created by the community. This project is **not affiliated with, endorsed by, or supported by AquaWiz**. Use at your own risk. For official support, please contact AquaWiz directly.
+
 ## Features
 
 - **Real-time monitoring**: Track alkalinity (dKH), pH, pH(O), and dosing volumes

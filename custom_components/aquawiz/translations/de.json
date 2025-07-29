@@ -2,8 +2,8 @@
   "config": {
     "step": {
       "user": {
-        "title": "AquaWiz Einrichtung",
-        "description": "Geben Sie Ihre AquaWiz Zugangsdaten ein",
+        "title": "AquaWiz Einrichtung (Inoffiziell)",
+        "description": "Geben Sie Ihre AquaWiz Zugangsdaten ein. Dies ist eine inoffizielle Integration, die nicht mit AquaWiz verbunden ist.",
         "data": {
           "username": "Benutzername",
           "password": "Passwort"

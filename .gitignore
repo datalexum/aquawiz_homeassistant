@@ -75,4 +75,5 @@ debug_*.py
 
 # Keep integration assets
 !custom_components/*/logo.png
+!custom_components/*/logo@2x.png  
 !custom_components/*/icon.png

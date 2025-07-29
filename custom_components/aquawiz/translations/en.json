@@ -2,8 +2,8 @@
   "config": {
     "step": {
       "user": {
-        "title": "AquaWiz Setup",
-        "description": "Enter your AquaWiz credentials",
+        "title": "AquaWiz Setup (Unofficial)",
+        "description": "Enter your AquaWiz credentials. This is an unofficial integration not affiliated with AquaWiz.",
         "data": {
           "username": "Username",
           "password": "Password"
