@@ -8,8 +8,10 @@ A Home Assistant integration for AquaWiz Alkalinity Monitoring devices. This int
 
 ## Features
 
-- **Real-time monitoring**: Track alkalinity (dKH), pH, pH(O), and dosing volumes
+- **Real-time monitoring**: Track alkalinity (dKH), pH, pH(O), dosing volumes, and more
 - **Calculated ΔpH**: Automatically calculates the difference between pH and pH(O)
+- **Dosing insights**: See the actual ml dosed per measurement, dKH adjusted, total ml dosed today, and dosing container fill level
+- **Device configuration**: Exposes target KH and max dosing rate from your device settings
 - **Historical data**: Backfills up to 7 days of historical data when first set up
 - **Long-term storage**: All sensor data is stored in Home Assistant's recorder for long-term analysis
 - **Configurable polling**: Adjustable update interval (default: 10 minutes)
@@ -50,13 +52,30 @@ After setup, you can configure the following options:
 
 The integration creates the following sensors for your AquaWiz device:
 
+### Measurement Sensors
+
 | Sensor | Unit | Description |
 |--------|------|-------------|
 | Alkalinity | dKH | Current alkalinity level |
 | pH | pH | Current pH level |
 | pH(O) | pH | pH level after air saturation |
-| Dosing | ml | Cumulative dosing volume |
 | ΔpH | pH | Calculated difference (pH - pH(O)) |
+
+### Dosing Sensors
+
+| Sensor | Unit | Description |
+|--------|------|-------------|
+| Dosing | mL | Amount dosed for the latest measurement |
+| dKH Dosed | dKH | Alkalinity adjustment for the latest measurement |
+| Dosing Today | mL | Total amount dosed today |
+| Dosing Container Remaining | mL | Solution remaining in the dosing container |
+
+### Device Configuration Sensors
+
+| Sensor | Unit | Description |
+|--------|------|-------------|
+| Target KH | dKH | Configured target alkalinity |
+| Max Dosing Per Hour | mL/h | Maximum dosing rate per hour |
 
 ## Data Storage
 
