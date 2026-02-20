@@ -8,7 +8,7 @@ from typing import Any
 
 import aiohttp
 
-from .const import API_AUTH_ENDPOINT, API_QUERY_ENDPOINT
+from .const import API_AUTH_ENDPOINT, API_BASE_URL, API_QUERY_ENDPOINT
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -156,6 +156,44 @@ class AquaWizAPI:
         except aiohttp.ClientError as exc:
             raise AquaWizAPIError(f"Connection error: {exc}")
 
+    async def get_device_config(
+        self,
+        username: str,
+        password: str,
+        device_id: str,
+    ) -> dict[str, Any]:
+        """Get device configuration from the AquaWiz API."""
+        await self._ensure_authenticated(username, password)
+
+        session = await self._get_session()
+        url = f"{API_BASE_URL}/KH/{device_id}/all_field"
+        json_data = {
+            "user": username,
+            "password": "",
+            "token": {
+                "access_token": self._access_token,
+            },
+        }
+
+        try:
+            async with session.post(url, json=json_data) as response:
+                if response.status == 200:
+                    return await response.json()
+                else:
+                    text = await response.text()
+                    raise AquaWizAPIError(f"Device config request failed: {response.status} - {text}")
+        except aiohttp.ClientError as exc:
+            raise AquaWizAPIError(f"Connection error: {exc}")
+
+    def parse_device_config(self, config_response: dict[str, Any]) -> dict[str, Any]:
+        """Parse device config response into usable values."""
+        return {
+            "ml_per_dkh": int(config_response.get("field5", 0)),
+            "dosing_container_remaining": int(config_response.get("field14", 0)),
+            "max_dosing_per_hour": int(config_response.get("field6", 0)),
+            "target_kh": int(config_response.get("field8", 0)) / 1000,
+        }
+
     async def get_historical_data(
         self,
         username: str,
@@ -186,34 +224,36 @@ class AquaWizAPI:
         
         return all_data
 
-    def parse_sensor_data(self, api_response: dict[str, Any]) -> list[dict[str, Any]]:
+    def parse_sensor_data(self, api_response: dict[str, Any], ml_per_dkh: float = 0) -> list[dict[str, Any]]:
         """Parse API response into sensor data points."""
         results = api_response.get("results", [])
         parsed_data = []
-        
+
         for result in results:
             if len(result) >= 2:
                 timestamp_ms = result[0]
                 data_fields = result[1]
-                
+
                 timestamp = datetime.fromtimestamp(timestamp_ms / 1000)
-                
+
                 # Parse the fields based on the API documentation
                 alkalinity = data_fields.get("field22", 0) / 1000  # dKH
-                dosing = data_fields.get("field26", 0) / 1000  # ml
+                dkh_dosed = data_fields.get("field26", 0) / 1000  # dKH adjusted
+                dosing = dkh_dosed * ml_per_dkh  # actual ml dosed
                 ph = data_fields.get("field27", 0) / 1000
                 ph_o = data_fields.get("field28", 0) / 1000
-                
+
                 # Calculate delta pH and round to 3 decimal places
                 delta_ph = round(ph - ph_o, 3) if ph > 0 and ph_o > 0 else 0
-                
+
                 parsed_data.append({
                     "timestamp": timestamp,
                     "alkalinity": alkalinity,
+                    "dkh_dosed": dkh_dosed,
                     "dosing": dosing,
                     "ph": ph,
                     "ph_o": ph_o,
                     "delta_ph": delta_ph,
                 })
-        
+
         return parsed_data

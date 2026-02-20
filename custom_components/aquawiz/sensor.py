@@ -20,9 +20,14 @@ from . import AquaWizConfigEntry
 from .const import (
     ATTR_ALKALINITY,
     ATTR_DELTA_PH,
+    ATTR_DKH_DOSED,
     ATTR_DOSING,
+    ATTR_DOSING_CONTAINER_REMAINING,
+    ATTR_DOSING_TODAY,
+    ATTR_MAX_DOSING_PER_HOUR,
     ATTR_PH,
     ATTR_PH_O,
+    ATTR_TARGET_KH,
     CONF_DEVICE_ID,
     DOMAIN,
 )
@@ -42,7 +47,12 @@ async def async_setup_entry(
         AquaWizPhSensor(coordinator, entry),
         AquaWizPhOSensor(coordinator, entry),
         AquaWizDosingSensor(coordinator, entry),
+        AquaWizDosingTodaySensor(coordinator, entry),
+        AquaWizDkhDosedSensor(coordinator, entry),
         AquaWizDeltaPhSensor(coordinator, entry),
+        AquaWizDosingContainerSensor(coordinator, entry),
+        AquaWizMaxDosingPerHourSensor(coordinator, entry),
+        AquaWizTargetKhSensor(coordinator, entry),
     ]
 
     async_add_entities(sensors)
@@ -187,6 +197,29 @@ class AquaWizDosingSensor(AquaWizSensorEntity):
         return data.get(ATTR_DOSING)
 
 
+class AquaWizDosingTodaySensor(AquaWizSensorEntity):
+    """Total dosing today sensor for AquaWiz."""
+
+    def __init__(
+        self, coordinator: AquaWizDataUpdateCoordinator, entry: ConfigEntry
+    ) -> None:
+        """Initialize the dosing today sensor."""
+        super().__init__(coordinator, entry, ATTR_DOSING_TODAY, "Dosing Today")
+
+        self._attr_native_unit_of_measurement = UnitOfVolume.MILLILITERS
+        self._attr_device_class = SensorDeviceClass.VOLUME
+        self._attr_state_class = SensorStateClass.TOTAL_INCREASING
+        self._attr_icon = "mdi:calendar-today"
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the state of the sensor."""
+        if not self.coordinator.data:
+            return None
+        data = self.coordinator.data.get("data", {})
+        return data.get(ATTR_DOSING_TODAY)
+
+
 class AquaWizDeltaPhSensor(AquaWizSensorEntity):
     """Delta pH sensor for AquaWiz."""
 
@@ -222,3 +255,92 @@ class AquaWizDeltaPhSensor(AquaWizSensorEntity):
                 attrs["ph_o"] = ph_o
                 attrs["calculation"] = "pH - pH(O)"
         return attrs
+
+
+class AquaWizDkhDosedSensor(AquaWizSensorEntity):
+    """dKH dosed sensor for AquaWiz."""
+
+    def __init__(
+        self, coordinator: AquaWizDataUpdateCoordinator, entry: ConfigEntry
+    ) -> None:
+        """Initialize the dKH dosed sensor."""
+        super().__init__(coordinator, entry, ATTR_DKH_DOSED, "dKH Dosed")
+
+        self._attr_native_unit_of_measurement = "dKH"
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_icon = "mdi:test-tube"
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the state of the sensor."""
+        if not self.coordinator.data:
+            return None
+        data = self.coordinator.data.get("data", {})
+        return data.get(ATTR_DKH_DOSED)
+
+
+class AquaWizDosingContainerSensor(AquaWizSensorEntity):
+    """Dosing container remaining sensor for AquaWiz."""
+
+    def __init__(
+        self, coordinator: AquaWizDataUpdateCoordinator, entry: ConfigEntry
+    ) -> None:
+        """Initialize the dosing container sensor."""
+        super().__init__(coordinator, entry, ATTR_DOSING_CONTAINER_REMAINING, "Dosing Container Remaining")
+
+        self._attr_native_unit_of_measurement = UnitOfVolume.MILLILITERS
+        self._attr_device_class = SensorDeviceClass.VOLUME
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_icon = "mdi:beaker-outline"
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the state of the sensor."""
+        if not self.coordinator.data:
+            return None
+        data = self.coordinator.data.get("data", {})
+        return data.get(ATTR_DOSING_CONTAINER_REMAINING)
+
+
+class AquaWizMaxDosingPerHourSensor(AquaWizSensorEntity):
+    """Max dosing per hour sensor for AquaWiz."""
+
+    def __init__(
+        self, coordinator: AquaWizDataUpdateCoordinator, entry: ConfigEntry
+    ) -> None:
+        """Initialize the max dosing per hour sensor."""
+        super().__init__(coordinator, entry, ATTR_MAX_DOSING_PER_HOUR, "Max Dosing Per Hour")
+
+        self._attr_native_unit_of_measurement = "mL/h"
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_icon = "mdi:speedometer"
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the state of the sensor."""
+        if not self.coordinator.data:
+            return None
+        data = self.coordinator.data.get("data", {})
+        return data.get(ATTR_MAX_DOSING_PER_HOUR)
+
+
+class AquaWizTargetKhSensor(AquaWizSensorEntity):
+    """Target KH sensor for AquaWiz."""
+
+    def __init__(
+        self, coordinator: AquaWizDataUpdateCoordinator, entry: ConfigEntry
+    ) -> None:
+        """Initialize the target KH sensor."""
+        super().__init__(coordinator, entry, ATTR_TARGET_KH, "Target KH")
+
+        self._attr_native_unit_of_measurement = "dKH"
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_icon = "mdi:target"
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the state of the sensor."""
+        if not self.coordinator.data:
+            return None
+        data = self.coordinator.data.get("data", {})
+        return data.get(ATTR_TARGET_KH)

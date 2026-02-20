@@ -116,26 +116,83 @@ class TestAquaWizAPI:
 
     @pytest.mark.asyncio
     async def test_parse_sensor_data(self, api_client, mock_api_data_response):
-        """Test parsing of sensor data."""
-        parsed_data = api_client.parse_sensor_data(mock_api_data_response)
+        """Test parsing of sensor data with ml_per_dkh."""
+        ml_per_dkh = 582
+        parsed_data = api_client.parse_sensor_data(mock_api_data_response, ml_per_dkh)
 
         assert len(parsed_data) == 1
         data_point = parsed_data[0]
-        
+
         assert data_point["alkalinity"] == 8.5
-        assert data_point["dosing"] == 2.5
+        assert data_point["dkh_dosed"] == 2.5
+        assert data_point["dosing"] == 2.5 * 582  # dkh_dosed * ml_per_dkh
         assert data_point["ph"] == 8.2
         assert data_point["ph_o"] == 8.1
         assert data_point["delta_ph"] == 0.1
         assert isinstance(data_point["timestamp"], datetime)
 
     @pytest.mark.asyncio
+    async def test_parse_sensor_data_no_ml_per_dkh(self, api_client, mock_api_data_response):
+        """Test parsing of sensor data without ml_per_dkh defaults dosing to 0."""
+        parsed_data = api_client.parse_sensor_data(mock_api_data_response)
+
+        assert len(parsed_data) == 1
+        data_point = parsed_data[0]
+
+        assert data_point["dkh_dosed"] == 2.5
+        assert data_point["dosing"] == 0  # 2.5 * 0
+
+    @pytest.mark.asyncio
     async def test_parse_sensor_data_empty(self, api_client):
         """Test parsing of empty sensor data."""
         empty_response = {"results": []}
         parsed_data = api_client.parse_sensor_data(empty_response)
-        
+
         assert parsed_data == []
+
+    @pytest.mark.asyncio
+    async def test_get_device_config_success(self, api_client, mock_api_config_response):
+        """Test successful device config retrieval."""
+        api_client._access_token = "test_token_123"
+        api_client._token_expires = datetime.now() + timedelta(hours=1)
+
+        with patch('aiohttp.ClientSession.post') as mock_post:
+            mock_response = AsyncMock()
+            mock_response.status = 200
+            mock_response.json.return_value = mock_api_config_response
+            mock_post.return_value.__aenter__.return_value = mock_response
+
+            result = await api_client.get_device_config(
+                "test@example.com", "testpass", "test_device_123"
+            )
+
+            assert result == mock_api_config_response
+
+    @pytest.mark.asyncio
+    async def test_get_device_config_error(self, api_client):
+        """Test device config retrieval with error."""
+        api_client._access_token = "test_token_123"
+        api_client._token_expires = datetime.now() + timedelta(hours=1)
+
+        with patch('aiohttp.ClientSession.post') as mock_post:
+            mock_response = AsyncMock()
+            mock_response.status = 500
+            mock_response.text.return_value = "Internal Server Error"
+            mock_post.return_value.__aenter__.return_value = mock_response
+
+            with pytest.raises(AquaWizAPIError, match="Device config request failed: 500"):
+                await api_client.get_device_config(
+                    "test@example.com", "testpass", "test_device_123"
+                )
+
+    def test_parse_device_config(self, api_client, mock_api_config_response):
+        """Test parsing of device config."""
+        config = api_client.parse_device_config(mock_api_config_response)
+
+        assert config["ml_per_dkh"] == 582
+        assert config["dosing_container_remaining"] == 671
+        assert config["max_dosing_per_hour"] == 41
+        assert config["target_kh"] == 7.2
 
     @pytest.mark.asyncio
     async def test_get_historical_data(self, api_client, mock_api_data_response):

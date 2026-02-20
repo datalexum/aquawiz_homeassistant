@@ -25,6 +25,8 @@ def mock_config_entry():
         options={},
         source="user",
         entry_id="test_entry_id",
+        unique_id="test@example.com_test_device_123",
+        discovery_keys={},
     )
 
 
@@ -56,12 +58,34 @@ def mock_api_data_response():
                     "field23": 0,       # Unknown field
                     "field24": 0,       # Unknown field
                     "field25": 0,       # Unknown field
-                    "field26": 2500,    # Dosing in ml * 1000 (2.5 ml)
+                    "field26": 2500,    # dKH adjusted * 1000 (2.5 dKH)
                     "field27": 8200,    # pH * 1000 (8.2 pH)
                     "field28": 8100,    # pH(O) * 1000 (8.1 pH)
                 }
             ]
         ]
+    }
+
+
+@pytest.fixture
+def mock_api_config_response():
+    """Mock API device config response."""
+    return {
+        "KHmail": "7200",
+        "LFmail": "500",
+        "field5": "582",
+        "field6": "41",
+        "field7": "0",
+        "field8": "7200",
+        "field9": "1341",
+        "serial": "KH1-00-02230",
+        "status": "none",
+        "DOSmail": "200",
+        "field10": "0",
+        "field13": "10000",
+        "field14": "671",
+        "field15": "1000",
+        "field16": "100",
     }
 
 
@@ -72,7 +96,8 @@ def mock_parsed_sensor_data():
     return {
         "timestamp": datetime.fromtimestamp(1706745600),
         "alkalinity": 8.5,
-        "dosing": 2.5,
+        "dkh_dosed": 2.5,
+        "dosing": 1455.0,  # 2.5 dKH * 582 ml/dKH
         "ph": 8.2,
         "ph_o": 8.1,
         "delta_ph": 0.1,

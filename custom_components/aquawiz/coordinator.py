@@ -28,6 +28,7 @@ class AquaWizDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._device_id = entry.data[CONF_DEVICE_ID]
         self._last_successful_update: datetime | None = None
         self._historical_backfill_done = False
+        self._ml_per_dkh: float = 0
 
         update_interval = timedelta(
             seconds=entry.options.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
@@ -43,23 +44,38 @@ class AquaWizDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_update_data(self) -> dict[str, Any]:
         """Update data via library."""
         try:
+            # Fetch device config for dosing calculation and config sensors
+            config_data: dict[str, Any] = {}
+            try:
+                raw_config = await self.api.get_device_config(
+                    self._username, self._password, self._device_id
+                )
+                config_data = self.api.parse_device_config(raw_config)
+                self._ml_per_dkh = config_data.pop("ml_per_dkh", 0)
+            except AquaWizAPIError as exc:
+                _LOGGER.warning("Failed to fetch device config: %s", exc)
+
             # Get current day's data
             current_data = await self.api.get_device_data(
                 self._username, self._password, self._device_id
             )
-            
-            parsed_data = self.api.parse_sensor_data(current_data)
-            
+
+            parsed_data = self.api.parse_sensor_data(current_data, self._ml_per_dkh)
+
             # If this is the first successful update, try to backfill historical data
             if not self._historical_backfill_done:
                 await self._backfill_historical_data()
                 self._historical_backfill_done = True
-            
+
             self._last_successful_update = datetime.now()
-            
+
             # Return the latest data point or empty dict if no data
             if parsed_data:
                 latest_data = max(parsed_data, key=lambda x: x["timestamp"])
+                latest_data["dosing_today"] = round(
+                    sum(p.get("dosing", 0) for p in parsed_data), 2
+                )
+                latest_data.update(config_data)
                 return {
                     "data": latest_data,
                     "device_id": self._device_id,
@@ -67,11 +83,11 @@ class AquaWizDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 }
             else:
                 return {
-                    "data": {},
+                    "data": config_data,
                     "device_id": self._device_id,
                     "last_update": self._last_successful_update,
                 }
-                
+
         except AquaWizAPIError as exc:
             raise UpdateFailed(f"Error communicating with API: {exc}")
 
@@ -92,7 +108,7 @@ class AquaWizDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             
             all_parsed_data = []
             for daily_data in historical_data:
-                parsed_data = self.api.parse_sensor_data(daily_data)
+                parsed_data = self.api.parse_sensor_data(daily_data, self._ml_per_dkh)
                 all_parsed_data.extend(parsed_data)
             
             if all_parsed_data:
@@ -159,6 +175,14 @@ class AquaWizDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             ),
             StatisticMetaData(
                 source=DOMAIN,
+                statistic_id=f"{DOMAIN}:{self._device_id}_dkh_dosed",
+                name="dKH Dosed",
+                unit_of_measurement="dKH",
+                has_mean=True,
+                has_sum=False,
+            ),
+            StatisticMetaData(
+                source=DOMAIN,
                 statistic_id=f"{DOMAIN}:{self._device_id}_delta_ph",
                 name="ΔpH",
                 unit_of_measurement="pH",
@@ -169,10 +193,10 @@ class AquaWizDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         # Create statistics data for each sensor
         for meta in statistics_meta:
-            sensor_key = meta.statistic_id.split("_")[-1]
-            if sensor_key == "delta":
-                sensor_key = "delta_ph"
-                
+            # Extract sensor key: everything after "{device_id}_"
+            prefix = f"{DOMAIN}:{self._device_id}_"
+            sensor_key = meta["statistic_id"][len(prefix):]
+
             statistics_data = []
             for point in data_points:
                 if sensor_key in point and point[sensor_key] is not None:
@@ -180,8 +204,8 @@ class AquaWizDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                         start=point["timestamp"],
                         mean=point[sensor_key],
                     )
-                    if meta.has_sum and sensor_key == "dosing":
-                        stat_data.sum = point[sensor_key]
+                    if meta["has_sum"] and sensor_key == "dosing":
+                        stat_data["sum"] = point[sensor_key]
                     statistics_data.append(stat_data)
             
             if statistics_data:

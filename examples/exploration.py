@@ -47,7 +47,7 @@ def get_values(token, device_id):
 
     # 2025-07-27T00:00:00.000Z needs to be replaced with the current date in ISO format, seems to return the data for 24h starting from that date.
     response = requests.get(
-        f'https://server.aquawiz.net/api/v1/query/device/{device_id}/graph?date=2025-07-27T00:00:00.000Z',
+        f'https://server.aquawiz.net/api/v1/query/device/{device_id}/graph?date=2026-02-20T00:00:00.000Z',
         headers=headers,
     )
     """
@@ -63,7 +63,7 @@ def get_values(token, device_id):
                     field23: int, # Unknown field, to be ignored
                     field24: int, # Unknown field, to be ignored 
                     field25: int, # Unknown field, to be ignored
-                    field26: int, # Alkalinity dosing in ml * 1000
+                    field26: int, # Alkalinity dosed * 1000
                     field27: int, # pH * 1000
                     field28: int, # pH(O) * 1000 (pH after saturation with air)
                 }
