@@ -188,10 +188,10 @@ class AquaWizAPI:
     def parse_device_config(self, config_response: dict[str, Any]) -> dict[str, Any]:
         """Parse device config response into usable values."""
         return {
-            "ml_per_dkh": int(config_response.get("field5", 0)),
-            "dosing_container_remaining": int(config_response.get("field14", 0)),
-            "max_dosing_per_hour": int(config_response.get("field6", 0)),
-            "target_kh": int(config_response.get("field8", 0)) / 1000,
+            "ml_per_dkh": float(config_response.get("field5", 0)),
+            "dosing_container_remaining": int(float(config_response.get("field14", 0))),
+            "max_dosing_per_hour": int(float(config_response.get("field6", 0))),
+            "target_kh": float(config_response.get("field8", 0)) / 1000,
         }
 
     async def get_historical_data(
